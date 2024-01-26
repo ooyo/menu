@@ -3,13 +3,26 @@ package com.reactnativemenu
 import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
-import android.view.*
+import android.view.GestureDetector
+import android.view.Gravity
+import android.view.Menu
+import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.PopupMenu
-import com.facebook.react.bridge.*
+import android.widget.PopupWindow
+import android.widget.TextView
+import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.ReactContext
+import com.facebook.react.bridge.ReadableArray
+import com.facebook.react.bridge.ReadableMap
+import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.events.RCTEventEmitter
 import com.facebook.react.views.view.ReactViewGroup
 import java.lang.reflect.Field
@@ -17,8 +30,11 @@ import java.lang.reflect.Field
 
 class MenuView(private val mContext: ReactContext): ReactViewGroup(mContext) {
   private lateinit var mActions: ReadableArray
+  private lateinit var mEmojiActions: ReadableArray
   private var mIsAnchoredToRight = false
   private val mPopupMenu: PopupMenu = PopupMenu(context, this)
+  private var mPopupMenuEmoji: PopupWindow = PopupWindow(context)
+
   private var mIsMenuDisplayed = false
   private var mIsOnLongPress = false
   private var mGestureDetector: GestureDetector
@@ -61,6 +77,10 @@ class MenuView(private val mContext: ReactContext): ReactViewGroup(mContext) {
     mActions = actions
   }
 
+  fun setEmojiActions(emojiActions: ReadableArray) {
+    mEmojiActions = emojiActions
+  }
+
   fun setIsAnchoredToRight(isAnchoredToRight: Boolean) {
     if (mIsAnchoredToRight == isAnchoredToRight) {
       return
@@ -74,6 +94,9 @@ class MenuView(private val mContext: ReactContext): ReactViewGroup(mContext) {
 
   private val getActionsCount: Int
     get() = mActions.size()
+
+  private val getEmojiActionsCount: Int
+    get() = mEmojiActions.size()
 
   private fun prepareMenuItem(menuItem: MenuItem, config: ReadableMap?) {
     val titleColor = when (config != null && config.hasKey("titleColor") && !config.isNull("titleColor")) {
@@ -189,6 +212,28 @@ class MenuView(private val mContext: ReactContext): ReactViewGroup(mContext) {
   private fun prepareMenu() {
     if (getActionsCount > 0) {
       mPopupMenu.menu.clear()
+
+      // Configure the first PopupMenu
+      configurePopupMenu(mPopupMenu, Gravity.BOTTOM)
+      configureEmojiPopupMenu()
+
+
+      mIsMenuDisplayed = true
+      mPopupMenu.show()
+    }
+  }
+
+  private fun configurePopupMenu(popupMenu: PopupMenu, gravity: Int) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+      popupMenu.gravity = when (mIsAnchoredToRight) {
+        true -> gravity or Gravity.RIGHT
+        false -> gravity or Gravity.LEFT
+      }
+    }
+
+    // ... (rest of the existing code for configuring PopupMenu)
+    if (getActionsCount > 0) {
+
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         mPopupMenu.gravity = when (mIsAnchoredToRight) {
           true -> Gravity.RIGHT
@@ -227,13 +272,85 @@ class MenuView(private val mContext: ReactContext): ReactViewGroup(mContext) {
         }
         i++
       }
+
+
       mPopupMenu.setOnDismissListener {
         mIsMenuDisplayed = false
       }
+
+
       mIsMenuDisplayed = true
       mPopupMenu.show()
     }
   }
+
+  private fun configureEmojiPopupMenu() {
+    if (mPopupMenuEmoji != null && mPopupMenuEmoji.isShowing()) {
+      mPopupMenuEmoji.dismiss();
+    }
+
+    if(getEmojiActionsCount > 0) {
+      val linearLayout = LinearLayout(mContext)
+      linearLayout.layoutParams = LinearLayout.LayoutParams(
+        LayoutParams.WRAP_CONTENT,
+        LayoutParams.WRAP_CONTENT
+      )
+      linearLayout.orientation = LinearLayout.HORIZONTAL
+
+
+      var e = 0
+      while (e < getEmojiActionsCount) {
+        if(!mEmojiActions.isNull(e)) {
+          val item = mEmojiActions.getMap(e)
+          val textView = TextView(mContext)
+          textView.layoutParams = ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+          )
+          textView.setText(item?.getString("title"))
+          textView.setPadding(16, 8, 16, 8)
+          textView.setTextColor(Color.WHITE)
+            textView.setOnClickListener() {
+                val args: WritableMap = Arguments.createMap()
+                  args.putString("event", item?.getString("id"))
+                  args.putString("target", "$id")
+                  mContext
+                    .getJSModule(RCTEventEmitter::class.java)
+                    .receiveEvent(id, "onPressAction", args)
+                true
+
+          }
+
+          // Check if the LinearLayout already has a parent
+          if (linearLayout.parent != null) {
+            (linearLayout.parent as ViewGroup).removeView(linearLayout)
+          }
+
+          if (textView.parent != null) {
+            (textView.parent as ViewGroup).removeView(textView)
+          }
+          linearLayout.addView(textView)
+          e++;
+      }
+
+        mPopupMenuEmoji =
+          PopupWindow(linearLayout, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, true)
+
+        val location = IntArray(2)
+        this.getLocationOnScreen(location)
+        mPopupMenuEmoji.setBackgroundDrawable(ColorDrawable(Color.WHITE))
+        linearLayout.setPadding(10, 10,10,10);
+        mPopupMenuEmoji.showAtLocation(
+          this,
+          Gravity.NO_GRAVITY,
+          location[0],
+          location[1] - 20
+        )
+
+    } 
+    }
+  }
+
 
   private fun getDrawableIdWithName(name: String): Int {
     val appResources: Resources = context.resources

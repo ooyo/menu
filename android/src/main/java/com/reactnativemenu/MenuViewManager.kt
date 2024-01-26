@@ -29,6 +29,11 @@ class MenuViewManager: ReactClippingViewManager<MenuView>() {
     view.setActions(actions)
   }
 
+  @ReactProp(name = "emoji")
+  fun setEmojiActions(view: MenuView, emojiActions: ReadableArray) {
+    view.setEmojiActions(emojiActions)
+  }
+
   @ReactProp(name = "isAnchoredToRight", defaultBoolean = false)
   fun setIsAnchoredToRight(view: MenuView, isAnchoredToRight: Boolean) {
     view.setIsAnchoredToRight(isAnchoredToRight)

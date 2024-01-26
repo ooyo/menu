@@ -9,7 +9,7 @@ import type {
   NativeActionEvent,
 } from './types';
 
-function processAction(action: MenuAction): ProcessedMenuAction {
+function processAction(action: MenuAction): ProcessedMenuAction { 
   return {
     ...action,
     imageColor: processColor(action.imageColor),
@@ -22,6 +22,8 @@ const MenuView: React.FC<MenuComponentProps> = ({ actions, ...props }) => {
   const processedActions = actions.map<ProcessedMenuAction>((action) =>
     processAction(action)
   );
+
+ 
   return <UIMenuView {...props} actions={processedActions} />;
 };
 

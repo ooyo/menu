@@ -1,190 +1,46 @@
 import * as React from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
-import { MenuView } from '@react-native-menu/menu';
+import { StyleSheet, View, FlatList } from 'react-native';
+import ChatMessage from './component/message';
+import ChatInput from './component/input';
+import CustomTopNavBar from './component/navbar'
 
-export const App = () => {
-  const [themeVariant] = React.useState<string | undefined>('light');
+export const App = () => { 
+  const [messages, setMessages] = React.useState([
+    { id: '1', text: 'BIEEEBZ!', sender: 'John', time: '15:34' },
+    { id: '2', text: 'Herro', sender: 'Jane', time: '15:37' }, 
+    { id: '4', text: 'replying to "Herro', sender: 'John', time: '15:37', replyTo: { sender: 'Justin Bieber', text: 'Herrro' } },
+  ]);
+
+  const handleSendMessage = (text: string) => {
+    const newMessage = {
+      id: String(messages.length + 1),
+      text,
+      sender: 'John',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setMessages([...messages, newMessage]);
+  };
 
   return (
-    <View style={styles.container}>
-      <MenuView
-        title="Menu Title"
-        onPressAction={({ nativeEvent }) => {
-          console.warn(JSON.stringify(nativeEvent));
-        }}
-        actions={[
-          {
-            id: 'add',
-            title: 'Add to List',
-            titleColor: '#2367A2',
-            image: Platform.select({
-              ios: 'plus',
-              android: 'ic_menu_add',
-            }),
-            imageColor: '#2367A2',
-            subactions: [
-              {
-                id: 'nested1',
-                title: 'Nested action',
-                titleColor: 'rgba(250,180,100,0.5)',
-                subtitle: 'State is mixed',
-                image: Platform.select({
-                  ios: 'heart.fill',
-                  android: 'ic_menu_today',
-                }),
-                imageColor: 'rgba(100,200,250,0.3)',
-                state: 'mixed',
-              },
-              {
-                id: 'nestedDestructive',
-                title: 'Destructive Action',
-                attributes: {
-                  destructive: true,
-                },
-                image: Platform.select({
-                  ios: 'trash',
-                  android: 'ic_menu_delete',
-                }),
-              },
-            ],
-          },
-          {
-            id: 'share',
-            title: 'Share Action',
-            titleColor: '#46F289',
-            subtitle: 'Share action on SNS',
-            image: Platform.select({
-              ios: 'square.and.arrow.up',
-              android: 'ic_menu_share',
-            }),
-            imageColor: '#46F289',
-            state: 'on',
-          },
-          {
-            id: 'mixed',
-            title: 'Mixed State',
-            titleColor: 'rgba(100,200,250,0.3)',
-            subtitle: 'State is mixed',
-            image: Platform.select({
-              ios: 'heart.fill',
-              android: 'ic_menu_today',
-            }),
-            imageColor: 'rgba(100,200,250,0.3)',
-            state: 'mixed',
-            subactions: [
-              {
-                id: 'nested2',
-                title: 'Nested action',
-                titleColor: 'rgba(250,180,100,0.5)',
-                subtitle: 'State is mixed',
-                image: Platform.select({
-                  ios: 'tray',
-                  android: 'ic_menu_agenda',
-                }),
-                imageColor: 'rgba(100,200,250,0.3)',
-                state: 'mixed',
-              },
-              {
-                id: 'nestedMixed',
-                title: 'Mixed State',
-                subtitle: 'State is mixed',
-                image: Platform.select({
-                  ios: 'heart.fill',
-                  android: 'ic_menu_today',
-                }),
-                imageColor: '#46F289',
-                subactions: [
-                  {
-                    id: 'nestednesteddisabled',
-                    title: 'Disabled Action',
-                    subtitle: 'Action is disabled',
-                    attributes: {
-                      disabled: true,
-                    },
-                    image: Platform.select({
-                      ios: 'tray',
-                      android: 'ic_menu_agenda',
-                    }),
-                  },
-                  {
-                    id: 'nestednestedhidden',
-                    title: 'Hidden Action',
-                    subtitle: 'Action is hidden',
-                    attributes: {
-                      hidden: true,
-                    },
-                  },
-                  {
-                    id: 'nestednesteddestructive',
-                    title: 'Destructive Action',
-                    attributes: {
-                      destructive: true,
-                    },
-                    image: Platform.select({
-                      ios: 'trash',
-                      android: 'ic_menu_delete',
-                    }),
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            id: 'disabled',
-            title: 'Disabled Action',
-            subtitle: 'Action is disabled',
-            attributes: {
-              disabled: true,
-            },
-            image: Platform.select({
-              ios: 'tray',
-              android: 'ic_menu_agenda',
-            }),
-          },
-          {
-            id: 'hidden',
-            title: 'Hidden Action',
-            subtitle: 'Action is hidden',
-            attributes: {
-              hidden: true,
-            },
-          },
-          {
-            id: 'destructive',
-            title: 'Destructive Action',
-            attributes: {
-              destructive: true,
-            },
-            image: Platform.select({
-              ios: 'trash',
-              android: 'ic_menu_delete',
-            }),
-          },
-        ]}
-        shouldOpenOnLongPress={true}
-        themeVariant={themeVariant}
-      >
-        <View style={styles.button}>
-          <Text style={styles.buttonText}>Test</Text>
-        </View>
-      </MenuView>
+    <>
+     <CustomTopNavBar />
+     <View style={styles.container}>   
+      <FlatList
+        data={messages}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <ChatMessage message={item} isCurrentUser={item.sender === 'John'} />}
+      />
+      <ChatInput onSendMessage={handleSendMessage} />
     </View>
+     </>
+    
   );
-};
-
+}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#000000',
+    padding: 16,
   },
-  button: {
-    height: 100,
-    width: 100,
-    backgroundColor: 'red',
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonText: { color: 'white' },
 });

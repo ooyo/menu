@@ -90,6 +90,7 @@ export type MenuAction = {
    * - On Android it does not support nesting next sub menus in sub menu item
    */
   subactions?: MenuAction[];
+  
   /**
    * Whether subactions should be inline (separated by divider) or nested (sub menu)
    */
@@ -107,6 +108,7 @@ type MenuComponentPropsBase = {
    * Actions to be displayed in the menu.
    */
   actions: MenuAction[];
+  emoji: MenuAction[];
   /**
    * The title of the menu.
    */
@@ -149,5 +151,6 @@ export type NativeMenuComponentProps = {
   style?: StyleProp<ViewStyle>;
   onPressAction?: ({ nativeEvent }: NativeActionEvent) => void;
   actions: ProcessedMenuAction[];
+  emojiactions: MenuAction[];
   title?: string;
 };
